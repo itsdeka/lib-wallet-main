@@ -70,6 +70,9 @@ class TxEntry {
       this.to_address_meta = data.to_address_meta
     }
 
+    this.tags = data.tags || []
+    this.label = data.label || ''
+
     Object.defineProperty(this, 'isValid', {
       value: isValid,
       writable: false,
