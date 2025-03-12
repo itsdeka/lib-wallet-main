@@ -1,4 +1,5 @@
 const { WalletStoreHyperbee } = require('lib-wallet-store')
+const { EventEmitter } = require('events')
 
 const MAX_SUB_SIZE = 10000
 
@@ -7,7 +8,7 @@ const MAX_SUB_SIZE = 10000
  * Handles wallet persistence using a db store, manages event subscriptions across wallets, and provides a centralized method for calling methods on individual wallets.
  * Supports loading all wallets or specific wallets by name.
  */
-class MultiWalletManager {
+class MultiWalletManager extends EventEmitter{
   constructor (opts, walletLoader) {
     this._store = new WalletStoreHyperbee({
       store_path: opts.store_path + '/wallet-manager'
@@ -223,6 +224,29 @@ class MultiWalletManager {
       return wallet[req.namespace][req.resource][req.method](...req.params)
     }
     return wallet[req.namespace][req.resource][req.method](req.params)
+  }
+
+  async callWallet2(req){
+    let wallet = this._wallets.get(req.name)
+    if (!wallet) {
+      wallet = await this._setupWallet({ name: req.name })
+      if (!wallet || wallet.length === 0) throw new Error(`Wallet with name ${req.name} not found `)
+      wallet = wallet.pop()
+      // todo : subscribe to events
+    }
+
+    if(!wallet[req.namespace]) throw new Error('namespace doesnt exist')
+    if(!wallet[req.namespace][req.chain]) throw new Error('chain does not exist')
+    if(!wallet[req.namespace][req.chain][req.method]) throw new Error('method does not exist')
+    if(!Array.isArray(req.params)) throw new Error('params is not array')
+
+    let res
+    try {
+      res = await wallet[req.namespace][req.chain][req.method](...req.params)
+    } catch(err) {
+      console.log(err)
+    }
+    return res
   }
 }
 
