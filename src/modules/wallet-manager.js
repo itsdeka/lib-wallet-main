@@ -114,7 +114,7 @@ class MultiWalletManager {
     this._wallets.set(wallet.walletName, wallet)
     await this.addWallet(req, walletExport)
     if (opts.req) {
-      this._subBootstrapEvents(wallet, opts.req)
+      this._subBootstrapEvents(wallet)
     }
     return walletExport
   }
@@ -176,14 +176,14 @@ class MultiWalletManager {
     return eventKey
   }
 
-  _subBootstrapEvents (wallet, req) {
+  _subBootstrapEvents (wallet) {
     const payEvents = this._walletLoader.bootstrapEvents.pay
 
     wallet.pay.each((asset, k) => {
       payEvents.forEach((ev) => {
         const eventKey = `${wallet.walletName}:pay-${k}:${ev}`
         asset.on(ev, (...args) => {
-          req.notify(eventKey, [...args])
+          this.emit(eventKey, [...args])
         })
       })
     })
@@ -195,7 +195,7 @@ class MultiWalletManager {
       wallet = await this._setupWallet({ name: req.name })
       if (!wallet || wallet.length === 0) throw new Error(`Wallet with name ${req.name} not found `)
       wallet = wallet.pop()
-      this._subBootstrapEvents(wallet, req)
+      this._subBootstrapEvents(wallet)
     }
     if (!wallet[req.namespace]) throw new Error('wallet doesnt have this namespace')
 
