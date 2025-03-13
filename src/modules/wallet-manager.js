@@ -183,9 +183,12 @@ class MultiWalletManager extends EventEmitter{
 
     wallet.pay.each((asset, k) => {
       payEvents.forEach((ev) => {
-        const eventKey = `${wallet.walletName}:pay-${k}:${ev}`
         asset.on(ev, (...args) => {
-          this.emit(eventKey, [...args])
+          this.emit('chain-event',{
+            name : wallet.walletName,
+            chain : k,
+            event: ev,
+          },[...args])
         })
       })
     })
