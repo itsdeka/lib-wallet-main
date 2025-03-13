@@ -10,6 +10,7 @@ const MAX_SUB_SIZE = 10000
  */
 class MultiWalletManager extends EventEmitter{
   constructor (opts, walletLoader) {
+    super()
     this._store = new WalletStoreHyperbee({
       store_path: opts.store_path + '/wallet-manager'
     })
