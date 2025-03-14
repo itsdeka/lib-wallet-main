@@ -115,9 +115,7 @@ class MultiWalletManager extends EventEmitter{
     const walletExport = await wallet.exportWallet()
     this._wallets.set(wallet.walletName, wallet)
     await this.addWallet(req, walletExport)
-    if (opts.req) {
-      this._subBootstrapEvents(wallet)
-    }
+    this._subBootstrapEvents(wallet)
     return walletExport
   }
 
