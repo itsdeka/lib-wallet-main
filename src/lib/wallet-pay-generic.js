@@ -18,6 +18,8 @@ const Provider = require('../modules/provider')
 const StateDb = require('../modules/state')
 const WalletPay = require('./wallet-pay')
 
+const { AccountAbstractionError } = require('./errors')
+
 class WalletPayGeneric extends WalletPay {
   constructor (config) {
     super(config)
@@ -340,6 +342,206 @@ class WalletPayGeneric extends WalletPay {
     }
     this.resumeSync()
     this.emit('sync-end')
+  }
+
+  /**
+   * Returns a wallet account's abstracted address.
+   * 
+   * @param {string} address The wallet account's address
+   * @returns {Promise<string>} The abstracted address
+   */
+  async getAbstractedAddress (address) {
+    throw new Error('Method "getAbstractedAddress(address)" must be implemented.');
+  }
+
+  /**
+   * Executes a transaction on a wallet account's abstracted address and returns the tx's id.
+   * 
+   * The abstracted account must own enough tokens to repay the paymaster that sponsored the transaction; otherwise, an {@link AccountAbstractionError} exception is thrown.
+   * 
+   * @param {string} address The wallet account's address
+   * @param {object} tx The transaction to execute on the abstracted account
+   * @param {string} tx.to The recipient of the transaction
+   * @param {string} tx.value The amount of native tokens to send to the recipient
+   * @param {string | undefined} tx.data The data sent along with the transaction
+   * @returns {Promise<string>} The transaction's id
+   */
+  async sendGaslessTransaction (address, tx) {
+    throw new Error('Method "sendGaslessTransaction(address, tx)" must be implemented.');
+  }
+
+  /**
+   * Executes a token transfer on a wallet account's abstracted address and returns the transfer's id.
+   * 
+   * The abstracted account must own enough tokens to repay the paymaster that sponsored the token transfer; otherwise, an {@link AccountAbstractionError} exception is thrown.
+   * 
+   * @param {string} address The wallet account's address
+   * @param {object} transfer The token transfer to execute on the abstracted account
+   * @param {string} transfer.token The token’s identifier (e.g. USDT)
+   * @param {string} transfer.to The recipient of the token transfer
+   * @param {string} transfer.value The amount of tokens to send to the recipient
+   * @returns {Promise<string>} The token transfer's id
+   */
+  async sendGaslessTokenTransfer (address, transfer) {
+    throw new Error('Method "sendGaslessTokenTransfer(address, transfer)" must be implemented.');
+  }
+
+  /**
+   * Returns the receipt of a gasless transaction, or null if the tx has not yet been included in a block.
+   * 
+   * @param {string} id the gasless transaction's id
+   * @returns {Promise<object | null>} The gasless tx's receipt
+   */
+  async getGaslessTransactionReceipt (id) {
+    throw new Error('Method "getGaslessTransactionReceipt(id)" must be implemented.');
+  }
+
+  /**
+   * @typedef {import('./currency')} Currency
+   */
+
+  /**
+   * @typedef {Object} SendResult
+   * @property {string?} hash The hash of the send operation (null if 'opts.simulate' is true).
+   * @property {Currency} gasCostInPaymasterToken The gas cost in paymaster token.
+   */
+
+  /**
+   * Transfers a token from an address to another (gasless).
+   * @param {Object} opts The transfer's options.
+   * @param {string} opts.address The address of the sender.
+   * @param {string} opts.receiver The address of the recipient.
+   * @param {string} opts.token The token to transfer (e.g. "USDT").
+   * @param {number} opts.amount The amount of 'token' tokens to transfer to the recipient.
+   * @param {string=} opts.amountUnit The unit used for 'amount'; available values: "main", "base" (default: "base").
+   * @param {boolean=} opts.simulate If true, the transfer will be simulated but not submitted (default: false).
+   * @return {Promise<SendResult>} The transfer's result.
+   */
+  async send (opts) {
+    throw new Error('Method "send(opts)" must be implemented.');
+  }
+
+  /**
+   * @typedef {Object} QuoteSendResult
+   * @property {Currency} gasCostInPaymasterToken The gas cost in paymaster token.
+   * @property {true} success True if the simulation was successful.
+   */
+
+  /**
+   * @typedef {Object} QuoteError
+   * @property {string} details The error's message.
+   * @property {false} success True if the simulation was successful.
+   */
+
+  /**
+   * Quotes the costs of a send operation.
+   * @see {@link send}
+   * @param {Object} opts The transfer's options.
+   * @param {string} opts.address The address of the sender.
+   * @param {string} opts.receiver The address of the recipient.
+   * @param {string} opts.token The token to transfer (e.g. "USDT").
+   * @param {number} opts.amount The amount of 'token' tokens to transfer to the recipient.
+   * @param {string=} opts.amountUnit The unit used for 'amount'; available values: "main", "base" (default: "base").
+   * @return {Promise<QuoteSendResult | QuoteError>} The simulation's result.
+   */
+  async quoteSend (opts) {
+    throw new Error('Method "quoteSend(opts)" must be implemented.');
+  }
+
+  /**
+   * @typedef {Object} SwapResult
+   * @property {string?} hash The hash of the swap operation (null if 'opts.simulate' is true).
+   * @property {Currency} gasCostInPaymasterToken The gas cost in paymaster token.
+   * @property {Currency} tokenInAmount The amount of 'opts.tokenIn' tokens sold.
+   * @property {Currency} tokenOutAmount The amount of 'opts.tokenOut' tokens bought.
+   */
+
+  /**
+   * Swaps a token for another (gasless).
+   * @param {Object} opts The swap's options.
+   * @param {string} opts.address The address of the sender.
+   * @param {string} opts.tokenIn The token to sell (e.g. "WETH").
+   * @param {string} opts.tokenOut The token to buy (e.g. "USDT").
+   * @param {number=} opts.tokenInAmount The amount of 'tokenIn' tokens to sell.
+   * @param {number=} opts.tokenOutAmount The amount of 'tokenOut' tokens to buy.
+   * @param {string=} opts.amountUnit The unit used for 'amountIn' or 'amountOut'; available values: "main", "base" (default: "base").
+   * @param {boolean=} opts.simulate If true, the swap will be simulated but not submitted (default: false).
+   * @return {Promise<SwapResult>} The swap's result.
+   */
+  async swap (opts) {
+    throw new Error('Method "swap(opts)" must be implemented.');
+  }
+
+  /**
+   * @typedef {Object} QuoteSwapResult
+   * @property {Currency} gasCostInPaymasterToken The gas cost in paymaster token.
+   * @property {Currency} tokenInAmount The amount of 'tokenIn' tokens sold.
+   * @property {Currency} tokenOutAmount The amount of 'tokenOut' tokens bought.
+   * @property {true} success True if the simulation was successful.
+   */
+
+  /**
+   * Quotes the costs of a swap operation.
+   * @see {@link swap}
+   * @param {Object} opts The swap's options.
+   * @param {string} opts.address The address of the sender.
+   * @param {string} opts.tokenIn The token to sell (e.g. "WETH").
+   * @param {string} opts.tokenOut The token to buy (e.g. "USDT").
+   * @param {number=} opts.tokenInAmount The amount of 'tokenIn' tokens to sell.
+   * @param {number=} opts.tokenOutAmount The amount of 'tokenOut' tokens to buy.
+   * @param {string=} opts.amountUnit The unit used for 'amountIn' or 'amountOut'; available values: "main", "base" (default: "base").
+   * @return {Promise<QuoteSwapResult | QuoteError>} The simulation's result.
+   */
+  async quoteSwap (opts) {
+    throw new Error('Method "quoteSwap(opts)" must be implemented.');
+  }
+
+  /**
+   * @typedef {Object} BridgeResult
+   * @property {string?} hash The hash of the bridge operation (null if 'opts.simulate' is true).
+   * @property {Currency} gasCostInPaymasterToken The gas cost in paymaster token.
+   * @property {Currency} bridgingCostInToken The bridging cost in 'opts.token' tokens.
+   */
+
+  /**
+   * Bridges a token to a different chain (gasless).
+   * @param {Object} opts The bridge's options.
+   * @param {string} opts.address The address of the sender.
+   * @param {string} opts.receiver The address of the recipient.
+   * @param {string} opts.chain The identifier of the destination chain (e.g. "arbitrum").
+   * @param {string} opts.token The token to bridge (e.g. "USDT").
+   * @param {number} opts.amount The amount of 'token' tokens to bridge to the destination chain.
+   * @param {string=} opts.amountUnit The unit used for 'amount'; available values: "main", "base" (default: "base").
+   * @param {number=} opts.nativeTokenDropAmount The amount to send as native tokens.
+   * @param {boolean=} opts.simulate If true, the bridge will be simulated but not submitted (default: false).
+   * @return {Promise<BridgeResult>} The bridge's result.
+   */
+  async bridge (opts) {
+    throw new Error('Method "bridge(opts)" must be implemented.');
+  }
+
+  /**
+   * @typedef {Object} QuoteBridgeResult
+   * @property {Currency} gasCostInPaymasterToken The gas cost in paymaster token.
+   * @property {Currency} bridgingCostInToken The bridging cost in 'opts.token' tokens.
+   * @property {true} success True if the simulation was successful.
+   */
+
+  /**
+   * Quotes the costs of a bridge operation.
+   * @see {@link bridge}
+   * @param {Object} opts The bridge's options.
+   * @param {string} opts.address The address of the sender.
+   * @param {string} opts.receiver The address of the recipient.
+   * @param {string} opts.chain The identifier of the destination chain (e.g. "arbitrum").
+   * @param {string} opts.token The token to bridge (e.g. "USDT").
+   * @param {number} opts.amount The amount of 'token' tokens to bridge to the destination chain.
+   * @param {string=} opts.amountUnit The unit used for 'amount'; available values: "main", "base" (default: "base").
+   * @param {number=} opts.nativeTokenDropAmount The amount to send as native tokens.
+   * @return {Promise<QuoteBridgeResult | QuoteError>} The simulation's result.
+   */
+  async quoteBridge (opts) {
+    throw new Error('Method "quoteBridge(opts)" must be implemented.');
   }
 }
 
