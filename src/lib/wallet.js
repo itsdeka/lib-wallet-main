@@ -130,12 +130,15 @@ class Wallet extends EventEmitter {
       }
       const modInfo = await asset._getModuleInfo()
       const endpoints = asset.getProviderEndpoint()
+      const accountAbstraction = asset.getAccountAbstractionConfig()
 
       return {
         name: key,
         module: modInfo.name,
         moduleVersion: modInfo.version,
         network: asset.network,
+        accountAbstraction: asset?.config?.account_abstraction, 
+        chainId: asset?.config?.chainId,
         endpoints,
         tokenKeys,
         tokenInstance,

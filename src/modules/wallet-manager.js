@@ -46,7 +46,6 @@ class MultiWalletManager extends EventEmitter{
 
     await this._store.close()
     this._wallets = new Map()
-
     return res
   }
 
@@ -62,7 +61,7 @@ class MultiWalletManager extends EventEmitter{
     })
   }
 
-  async addWallet (req, walletExport) {
+  async addWallet (_, walletExport) {
     const walletList = await this.getWalletList()
     if (walletList.includes(walletExport.name)) {
       throw new Error('wallet already exists')
@@ -119,33 +118,6 @@ class MultiWalletManager extends EventEmitter{
     return walletExport
   }
 
-  _subscribe (req, wallet, opts) {
-    const eventName = this._getEventName(req)
-    let eventKey
-
-    if (this._subs.size === MAX_SUB_SIZE) throw new Error('memory leak: too many subscriptions')
-
-    function eventHandler (...args) {
-      try {
-        req.notify(eventKey, [...args])
-      } catch { }
-    }
-
-    if (opts === 'wallet') {
-      eventKey = `${req.name}:${eventName}`
-      wallet.on(eventName, eventHandler)
-    } else if (opts === 'resource') {
-      eventKey = `${req.name}:${req.namespace}-${req.resource}:${eventName}`
-      wallet[req.namespace][req.resource].on(eventName, eventHandler)
-    } else {
-      throw new Error('invalid subscriptions opts')
-    }
-
-    this._subs.set(eventKey, eventHandler)
-
-    return eventKey
-  }
-
   _getEventName (req) {
     if (!Array.isArray(req.params)) throw new Error('req params must be an array')
     const eventName = req.params.shift()
@@ -157,23 +129,6 @@ class MultiWalletManager extends EventEmitter{
     const handler = this._subs.get(k)
     if (!handler) throw new Error('handler does not exist ' + k)
     return handler
-  }
-
-  _unsubscribe (req, wallet, opts) {
-    let eventKey
-    const eventName = this._getEventName(req)
-
-    if (opts === 'wallet') {
-      eventKey = `${req.name}:${eventName}`
-      wallet.off(eventName, this._getEventHandler(eventKey))
-    } else if (opts === 'resource') {
-      eventKey = `${req.name}:${req.namespace}-${req.resource}:${eventName}`
-      wallet[req.namespace][req.resource].off(eventName, this._getEventHandler(eventKey))
-    } else {
-      throw new Error('invalid unsub opts')
-    }
-    this._subs.delete(eventKey)
-    return eventKey
   }
 
   _subBootstrapEvents (wallet) {
@@ -192,43 +147,7 @@ class MultiWalletManager extends EventEmitter{
     })
   }
 
-  async callWallet (req) {
-    let wallet = this._wallets.get(req.name)
-    if (!wallet) {
-      wallet = await this._setupWallet({ name: req.name })
-      if (!wallet || wallet.length === 0) throw new Error(`Wallet with name ${req.name} not found `)
-      wallet = wallet.pop()
-      this._subBootstrapEvents(wallet)
-    }
-    if (!wallet[req.namespace]) throw new Error('wallet doesnt have this namespace')
-
-    if (req.namespace === 'on') {
-      return this._subscribe(req, wallet, 'wallet')
-    } else if (req.namespace === 'off') {
-      return this._unsubscribe(req, wallet, 'wallet')
-    }
-
-    if (!req.resource) {
-      return wallet[req.namespace](...req.params)
-    }
-
-    if (!wallet[req.namespace][req.resource]) throw new Error('wallet doesnt have this resource')
-
-    if (req.method === 'on') {
-      return this._subscribe(req, wallet, 'resource')
-    } else if (req.method === 'off') {
-      return this._unsubscribe(req, wallet, 'resource')
-    }
-
-    if (!wallet[req.namespace][req.resource][req.method]) throw new Error('wallet resource does not have that method name')
-
-    if (Array.isArray(req.params)) {
-      return wallet[req.namespace][req.resource][req.method](...req.params)
-    }
-    return wallet[req.namespace][req.resource][req.method](req.params)
-  }
-
-  async callWallet2(req){
+  async callWallet(req){
     let wallet = this._wallets.get(req.name)
     if (!wallet) {
       wallet = await this._setupWallet({ name: req.name })
