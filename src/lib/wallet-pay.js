@@ -72,7 +72,7 @@ class TxEntry {
 
     this.tags = data.tags || []
     this.label = data.label || ''
-    this.internalIndex = data.internalIndex || 0
+    this.internal_index = data.internal_index || 0
 
     Object.defineProperty(this, 'isValid', {
       value: isValid,
