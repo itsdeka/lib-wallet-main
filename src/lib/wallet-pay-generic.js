@@ -15,6 +15,7 @@
 //
 const HdWallet = require('../modules/hdwallet')
 const Provider = require('../modules/provider')
+const Preference = require('../modules/preference')
 const StateDb = require('../modules/state')
 const WalletPay = require('./wallet-pay')
 
@@ -45,8 +46,8 @@ class WalletPayGeneric extends WalletPay {
       this._hdWallet = await this._getDefaultHdWallet()
     }
 
-    if (!this.state) {
-      this.state = await this._getDefaultState()
+    if (!this.preference) {
+      this._pref = await this._getDefaultPreference()
     }
 
     await this._finishInit()
@@ -113,6 +114,10 @@ class WalletPayGeneric extends WalletPay {
     })
 
     return hdWallet
+  }
+
+  async _getDefaultPreference () {
+    return new Preference()
   }
 
   async _getDefaultState () {
