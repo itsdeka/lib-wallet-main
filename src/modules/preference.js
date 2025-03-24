@@ -63,14 +63,14 @@ class Preference {
    */
   async getAllPreferences () {
     const preferences = {}
-    const stream = this._store.createReadStream({ 
+    const stream = this._store.db.createReadStream({ 
       gte: 'pref:',
       lt: 'pref:\uffff'
     })
 
     for await (const { key, value } of stream) {
       const prefKey = key.slice(5) // Remove 'pref:' prefix
-      preferences[prefKey] = value
+      preferences[prefKey] = this._store._parseValue(value)
     }
 
     return preferences
