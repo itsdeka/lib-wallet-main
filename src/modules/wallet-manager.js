@@ -156,6 +156,18 @@ class MultiWalletManager extends EventEmitter{
       // todo : subscribe to events
     }
 
+    // Call direct to wallet
+    if (!req.namespace) {
+      if (!wallet[req.method]) throw new Error('method does not exist on wallet')
+      if (!Array.isArray(req.params)) throw new Error('params is not array')
+      try {
+        return await wallet[req.method](...req.params)
+      } catch(err) {
+        console.log(err)
+        throw err
+      }
+    }
+
     if(!wallet[req.namespace]) throw new Error('namespace doesnt exist')
     if(!wallet[req.namespace][req.chain]) throw new Error('chain does not exist')
     if(!wallet[req.namespace][req.chain][req.method]) throw new Error('method does not exist')
@@ -166,6 +178,7 @@ class MultiWalletManager extends EventEmitter{
       res = await wallet[req.namespace][req.chain][req.method](...req.params)
     } catch(err) {
       console.log(err)
+      throw err
     }
     return res
   }
