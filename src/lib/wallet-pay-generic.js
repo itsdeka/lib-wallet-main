@@ -46,6 +46,10 @@ class WalletPayGeneric extends WalletPay {
       this._hdWallet = await this._getDefaultHdWallet()
     }
 
+    if (!this.state) {
+      this.state = await this._getDefaultState()
+    }
+
     if (!this.preference) {
       this._pref = await this._getDefaultPreference()
     }
